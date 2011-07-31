@@ -20,6 +20,11 @@ def main():
     print len(enemies.sprites())
     allenemies = pygame.sprite.RenderUpdates(enemies)
     
+    food = pygame.sprite.RenderPlain()
+    for i in range(0, random.randint(NUM_FOOD /2 , NUM_FOOD) - 1):
+        food.add(Food())
+    
+    
     hunters = [Hunter()]
     
     allhunters = pygame.sprite.RenderPlain(hunters)
@@ -52,6 +57,7 @@ def main():
         for e in enemies:
             e.update()
             handleEnemyCollisions(e, enemies)
+            e.graze(food)
             e.draw(screen)
             
         #End enemy updates
@@ -61,6 +67,8 @@ def main():
             h.hunt(enemies)
             h.draw(screen)
         
+        food.update()
+        food.draw(screen)
         
         #check for game over
         if len(enemies.sprites()) == 1:
@@ -84,11 +92,16 @@ def handleEnemyCollisions(e, enemies):
     for ei in enemies:
         if e is not ei:
             if e.rect.colliderect(ei.rect):
-                if e.kills == 0:
-                    ei.grow()
+                if e.growth > ei.growth:
+                    ei.kill()
+                    e.grow(ei.growth)
+                elif ei.growth > e.growth:
+                    e.kill()
+                    ei.grow(e.growth)
                 else:
-                    ei.grow(e.kills)
-                e.kill()
+                    temp = e.angle
+                    e.angle = ei.angle
+                    ei.angle = temp
                 # print "%s vs %s, %s has %s kills." % (e.id, ei.id, ei.id, ei.kills )
                 break
                 

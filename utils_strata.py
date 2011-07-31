@@ -13,8 +13,25 @@ GAME_TITLE = 'Strata'
 MOVE_KEYS = (pygame.K_UP, pygame.K_DOWN, pygame.K_RIGHT, pygame.K_LEFT,
             pygame.K_w, pygame.K_s, pygame.K_d, pygame.K_a)
 NUM_CREEPS = 40
+NUM_FOOD = 10
 
 #TERRAIN_TYPES = ("normal", "ice", "desert", "")
+
+
+def findNearest(myrect, things):
+    mini = (None, 99999)
+    for e in things:
+        dto_topleft = hypot(e.rect.topleft[0] - myrect.center[0], e.rect.topleft[1] - myrect.center[1])
+        dto_topright = hypot(e.rect.topright[0] - myrect.center[0], e.rect.topright[1] - myrect.center[1])
+        dto_bottomleft = hypot(e.rect.bottomleft[0] - myrect.center[0], e.rect.bottomleft[1] - myrect.center[1])
+        dto_bottomright = hypot(e.rect.bottomright[0] - myrect.center[0], e.rect.bottomright[1] - myrect.center[1])
+        
+        distance = min(dto_topleft, dto_topright, dto_bottomleft, dto_bottomright)
+
+        if distance < mini[1]:
+            mini = (e, distance)
+            
+    return mini[0]
 
 def load_image(name, colorkey=None):
     fullname = os.path.join("media", name)

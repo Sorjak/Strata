@@ -2,13 +2,12 @@ import pygame, random, os, sys, re, math
 from time import time
 from pygame.locals import *
 from utils_strata import *
+from basic_objects_strata import *
 
 # drag = 0.999
 # elasticity = 0.7
 # gravity = (math.pi, 0.002)
-drag = 1
-elasticity = 1
-gravity = (math.pi, 0)
+
 
 class Player(pygame.sprite.DirtySprite):
     def __init__(self, power):
@@ -93,60 +92,29 @@ class Player(pygame.sprite.DirtySprite):
         return out
     
 
-class Particle(object):
-    def __init__(self):
-        random.seed()
-        self.x = random.randint(0, WINDOW_SIZE[0])
-        self.y = random.randint(0, WINDOW_SIZE[1])
-        self.angle = random.uniform(0, math.pi*2)
-        self.speed = random.random()
-    
-    def move(self):
-        # self.speed *= drag
-        (self.angle, self.speed) = addVectors((self.angle, self.speed), gravity)
-        self.x += math.sin(self.angle) * self.speed
-        self.y -= math.cos(self.angle) * self.speed
-        self.bounce()
-    
-    def bounce(self):
-        width = WINDOW_SIZE[0]
-        height = WINDOW_SIZE[1]
-        if self.x >= width - self.rect.size[0]:
-            self.angle = 2*math.pi - self.angle
-            self.x = width - self.rect.size[0]
-            self.speed *= elasticity
-        elif self.x <= 0:
-            self.angle = 2*math.pi - self.angle
-            self.x = 1
-            self.speed *= elasticity
-
-        if self.y >= height - self.rect.size[1]:
-            self.angle = math.pi - self.angle
-            self.y = height - self.rect.size[1]
-            self.speed *= elasticity
-        elif self.y <= 0:
-            self.angle = math.pi - self.angle
-            self.y = 1
-            self.speed *= elasticity
 
 class Creep(Particle, pygame.sprite.DirtySprite):
     def __init__(self, id):
         pygame.sprite.DirtySprite.__init__(self)
         Particle.__init__(self)
-        self.image_raw, self.rect = load_image("creep" + str(random.randint(1, 2)) + ".png", -1)
+        self.image_raw, self.rect = load_image("creep" + str(random.randint(1, 3)) + ".png", -1)
         self.image = pygame.transform.scale(self.image_raw, (15, 15))
         self.rect.size = (15, 15)
         self.rect.topleft = (self.x, self.y)
         rndcolor = random.randint(1, 254)
         self.color = (rndcolor, rndcolor, rndcolor)
         self.id = id
-        self.kills = 0
+        self.growth = 0
         self.selected = False
+        self.fleeing = False
+        self.grazing = False
+        self.nearestFood = None
     
     def update(self):
-        self.move()
-        self.rect.x = self.x
-        self.rect.y = self.y
+        if not self.grazing:
+            self.move()
+            self.rect.x = self.x
+            self.rect.y = self.y
         
     def draw(self, screen):
         if self.selected:
@@ -155,12 +123,28 @@ class Creep(Particle, pygame.sprite.DirtySprite):
             pygame.draw.rect(screen, BLUE, self.rect, 2)
         # screen.blit(self.image, self.rect)
     
+    def graze(self, food):
+        if not self.nearestFood:
+            self.grazing = False
+            self.nearestFood = self._findNearestFood(food)
+        else:
+            if self.rect.colliderect(self.nearestFood.rect):
+                self.grazing = True
+                # self.nearestFood.value = self.nearestFood.value - 1
+                # self.grow()
+            else:
+                tempX = self.nearestFood.rect.centerx - self.rect.centerx
+                tempY = self.nearestFood.rect.centery - self.rect.centery
+                self.angle = degrees(atan2(tempY, tempX))
+            
         
-    def grow(self, kills = 1):
-        self.kills += kills
-        grow_factor = (self.kills + 1) * 15
-        self.image = pygame.transform.scale(self.image_raw, (grow_factor, grow_factor))
-        self.rect.size = (grow_factor, grow_factor)
+    def grow(self, amount=1):
+        self.growth += amount
+        self.image = pygame.transform.scale(self.image_raw, (self.growth, self.growth))
+        self.rect.size = (self.growth, self.growth)
+        
+    def _findNearestFood(self, food):
+        return findNearest(self.rect, food)
         
 from math import hypot, atan2, degrees
         
@@ -207,22 +191,20 @@ class Hunter(Particle, pygame.sprite.DirtySprite):
         
             
     def _findNearestEnemy(self, enemies):
-        mini = (None, 99999)
-        for e in enemies:
-            dto_topleft = hypot(e.rect.topleft[0] - self.rect.center[0], e.rect.topleft[1] - self.rect.center[1])
-            dto_topright = hypot(e.rect.topright[0] - self.rect.center[0], e.rect.topright[1] - self.rect.center[1])
-            dto_bottomleft = hypot(e.rect.bottomleft[0] - self.rect.center[0], e.rect.bottomleft[1] - self.rect.center[1])
-            dto_bottomright = hypot(e.rect.bottomright[0] - self.rect.center[0], e.rect.bottomright[1] - self.rect.center[1])
-            
-            distance = min(dto_topleft, dto_topright, dto_bottomleft, dto_bottomright)
+        return findNearest(self.rect, enemies)
 
-            if distance < mini[1]:
-                mini = (e, distance)
-                
-        return mini[0]
-
-class MapSquare(object):
+class Food(Static, pygame.sprite.DirtySprite):
     def __init__(self):
-        self.terrain = "normal"
-        self.image, self.rect = load_image("grass.jpg")
+        pygame.sprite.DirtySprite.__init__(self)
+        Static.__init__(self)
+        self.image, self.rect = load_image("grass.jpg", -1)
+        self.image = pygame.transform.scale(self.image, (30, 30))
+        self.rect.size = (20, 20)
+        self.rect.topleft = (self.x, self.y)
+        self.value = 25
+    def update(self):
+        if self.value <= 0:
+            self.kill()
+        
+
         
