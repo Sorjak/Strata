@@ -111,27 +111,26 @@ class Creep(Particle, pygame.sprite.DirtySprite):
         self.nearestFood = None
     
     def update(self):
-        if not self.grazing:
-            self.move()
-            self.rect.x = self.x
-            self.rect.y = self.y
+        self.move()
+        self.rect.x = self.x
+        self.rect.y = self.y
         
     def draw(self, screen):
         if self.selected:
             pygame.draw.rect(screen, RED, self.rect, 2)
-        else:
-            pygame.draw.rect(screen, BLUE, self.rect, 2)
         # screen.blit(self.image, self.rect)
     
     def graze(self, food):
-        if not self.nearestFood:
+        if self.grazing:
+            self.speed = 0
+        if not self.nearestFood or self.nearestFood.value <= 0:
             self.grazing = False
             self.nearestFood = self._findNearestFood(food)
         else:
             if self.rect.colliderect(self.nearestFood.rect):
                 self.grazing = True
-                # self.nearestFood.value = self.nearestFood.value - 1
-                # self.grow()
+                self.nearestFood.value -= .01
+                
             else:
                 tempX = self.nearestFood.rect.centerx - self.rect.centerx
                 tempY = self.nearestFood.rect.centery - self.rect.centery
@@ -140,11 +139,13 @@ class Creep(Particle, pygame.sprite.DirtySprite):
         
     def grow(self, amount=1):
         self.growth += amount
-        self.image = pygame.transform.scale(self.image_raw, (self.growth, self.growth))
-        self.rect.size = (self.growth, self.growth)
+        if self.growth % 1 == 0:
+            togrow = (int(self.growth), int(self.growth))
+            self.image = pygame.transform.scale(self.image_raw, togrow)
+            self.rect.size = togrow
         
     def _findNearestFood(self, food):
-        return findNearest(self.rect, food)
+        return findNearest(self.rect, food)[0]
         
 from math import hypot, atan2, degrees
         
@@ -170,14 +171,19 @@ class Hunter(Particle, pygame.sprite.DirtySprite):
     def draw(self, screen):
             
         font = pygame.font.Font(None, 12)
-        screen.blit(font.render("%s" % self.speed, 1, WHITE), (self.rect.left, self.rect.bottom))
+        screen.blit(font.render("%s" % self.angle, 1, WHITE), (self.rect.left, self.rect.bottom))
+        opposite = self.rect.centery + (5 * degrees(math.sin(self.angle)))
+        adjacent = self.rect.centerx + (5 * degrees(math.cos(self.angle)))
+        pygame.draw.aaline(screen, WHITE, self.rect.center, (opposite, adjacent))
         
         screen.blit(self.image, self.rect)
     
     def hunt(self, enemies):
         if not self.hunting:
-            self.nearestEnemy = self._findNearestEnemy(enemies)
+            temp = self._findNearestEnemy(enemies)
+            self.nearestEnemy = temp[0]
         if self.nearestEnemy:
+            print "Now hunting %s, distance is %s" % (self.nearestEnemy.id, self._distanceToEnemy())
             self.hunting = True
             self.nearestEnemy.selected = True
             if self.rect.colliderect(self.nearestEnemy.rect):
@@ -192,6 +198,17 @@ class Hunter(Particle, pygame.sprite.DirtySprite):
             
     def _findNearestEnemy(self, enemies):
         return findNearest(self.rect, enemies)
+        
+    def _distanceToEnemy(self):
+        myrect = self.rect
+        e = self.nearestEnemy
+        dto_topleft = hypot(e.rect.topleft[0] - myrect.center[0], e.rect.topleft[1] - myrect.center[1])
+        dto_topright = hypot(e.rect.topright[0] - myrect.center[0], e.rect.topright[1] - myrect.center[1])
+        dto_bottomleft = hypot(e.rect.bottomleft[0] - myrect.center[0], e.rect.bottomleft[1] - myrect.center[1])
+        dto_bottomright = hypot(e.rect.bottomright[0] - myrect.center[0], e.rect.bottomright[1] - myrect.center[1])
+        
+        distance = min(dto_topleft, dto_topright, dto_bottomleft, dto_bottomright)
+        return distance
 
 class Food(Static, pygame.sprite.DirtySprite):
     def __init__(self):

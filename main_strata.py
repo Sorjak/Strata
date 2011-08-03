@@ -9,11 +9,8 @@ def main():
     clock = pygame.time.Clock()
     running = 1
     
-    current_string = []
     font = pygame.font.Font(None, 24)
-    inspell = False
     
-    # player = Player(8)
     enemies = pygame.sprite.RenderPlain()
     for i in range(0, random.randint(NUM_CREEPS / 2 , NUM_CREEPS)-1):
         enemies.add(Creep(i))
@@ -105,9 +102,6 @@ def handleEnemyCollisions(e, enemies):
                 # print "%s vs %s, %s has %s kills." % (e.id, ei.id, ei.id, ei.kills )
                 break
                 
-def collided(one, two):
-    v = Vector2.from_points(one.center, two.center)
-
 def handleTextInput(st, font):
     if re.match(r"ask\s(?P<words>.*?)\sfen", st):
         textcolor = RED

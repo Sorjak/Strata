@@ -31,7 +31,7 @@ def findNearest(myrect, things):
         if distance < mini[1]:
             mini = (e, distance)
             
-    return mini[0]
+    return mini
 
 def load_image(name, colorkey=None):
     fullname = os.path.join("media", name)
