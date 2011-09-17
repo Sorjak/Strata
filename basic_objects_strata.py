@@ -1,52 +1,56 @@
 import pygame, random, os, sys, re, math
+from random import choice
 from time import time
 from pygame.locals import *
 from utils_strata import *
+from math import hypot, atan2, radians, degrees
+from pygame.math import Vector2
 
-drag = 1
-elasticity = 1
-gravity = (math.pi, 0)
 
 class Particle(object):
     def __init__(self):
         random.seed()
-        self.x = random.randint(0, WINDOW_SIZE[0])
-        self.y = random.randint(0, WINDOW_SIZE[1])
-        self.angle = random.uniform(0, math.pi*2)
+        thing1 = round(choice([x * 0.1 for x in range(-10, 10)]) , 3)
+        thing2 = round(choice([x * 0.1 for x in range(-10, 10)]) , 3)
+        self.position = Vector2(random.randint(0, GAME_SIZE[0]), random.randint(0, GAME_SIZE[1]))
+        self.direction = Vector2(thing1, thing2)
         self.speed = random.random()
     
     def move(self):
-        # self.speed *= drag
-        (self.angle, self.speed) = addVectors((self.angle, self.speed), gravity)
-        self.x += math.sin(self.angle) * self.speed
-        self.y -= math.cos(self.angle) * self.speed
+        displacement = Vector2(self.direction.x * self.speed, self.direction.y * self.speed)
+        self.position = self.position + displacement
         self.bounce()
     
     def bounce(self):
-        width = WINDOW_SIZE[0]
-        height = WINDOW_SIZE[1]
-        if self.x >= width - self.rect.size[0]:
-            self.angle = 2*math.pi - self.angle
-            self.x = width - self.rect.size[0]
-            self.speed *= elasticity
-        elif self.x <= 0:
-            self.angle = 2*math.pi - self.angle
-            self.x = 1
-            self.speed *= elasticity
+        width = GAME_SIZE[0]
+        height = GAME_SIZE[1]
+        # x coords
+        if self.position.x >= width - (self.rect.size[0] / 2):
+            self.position.x = width - (self.rect.size[0] / 2)
+            self.direction.reflect_ip(Vector2(-1, 0))
+        elif self.position.x <= (self.rect.size[0] / 2):
+            self.position.x = (self.rect.size[0] / 2)
+            self.direction.reflect_ip(Vector2(1, 0))   
+        # y coords  
+        if self.position.y >= height - (self.rect.size[1] / 2):
+            self.position.y = height - (self.rect.size[1] / 2)
+            self.direction.reflect_ip(Vector2(0, -1))   
+        elif self.position.y <= (self.rect.size[1] / 2):
+            self.position.y = (self.rect.size[1] / 2)
+            self.direction.reflect_ip(Vector2(0, 1))   
             
-        if self.y >= height - self.rect.size[1]:
-            self.angle = math.pi - self.angle
-            self.y = height - self.rect.size[1]
-            self.speed *= elasticity
-        elif self.y <= 0:
-            self.angle = math.pi - self.angle
-            self.y = 1
-            self.speed *= elasticity
-    
-
+    def _setRandomPosition(self):
+        self.position = Vector2(random.randint(0, GAME_SIZE[0]), random.randint(0, GAME_SIZE[1]))
+        
+    def _setRandomDirection(self):
+        thing1 = round(choice([x * 0.1 for x in range(-10, 10)]) , 3)
+        thing2 = round(choice([x * 0.1 for x in range(-10, 10)]) , 3)
+        self.direction = Vector2(thing1, thing2)
 
 class Static(object):
-    def __init__(self):
+    def __init__(self, position = None):
         random.seed()
-        self.x = random.randint(0, WINDOW_SIZE[0])
-        self.y = random.randint(0, WINDOW_SIZE[1])
+        if position:
+            self.position = position
+        else:
+            self.position = Vector2(random.randint(0, GAME_SIZE[0]), random.randint(0, GAME_SIZE[1]-20))
