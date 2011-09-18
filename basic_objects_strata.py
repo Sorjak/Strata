@@ -8,13 +8,20 @@ from pygame.math import Vector2
 
 
 class Particle(object):
-    def __init__(self):
+    def __init__(self, pos=None, speed=None):
         random.seed()
         thing1 = round(choice([x * 0.1 for x in range(-10, 10)]) , 3)
         thing2 = round(choice([x * 0.1 for x in range(-10, 10)]) , 3)
-        self.position = Vector2(random.randint(0, GAME_SIZE[0]), random.randint(0, GAME_SIZE[1]))
         self.direction = Vector2(thing1, thing2)
-        self.speed = random.random()
+        
+        if not pos:
+            self.position = Vector2(random.randint(0, GAME_SIZE[0]), random.randint(0, GAME_SIZE[1]))
+        else:
+            self.position = pos
+        if not speed:
+            self.speed = random.random()
+        else:
+            self.speed = speed
     
     def move(self):
         displacement = Vector2(self.direction.x * self.speed, self.direction.y * self.speed)
@@ -46,7 +53,16 @@ class Particle(object):
         thing1 = round(choice([x * 0.1 for x in range(-10, 10)]) , 3)
         thing2 = round(choice([x * 0.1 for x in range(-10, 10)]) , 3)
         self.direction = Vector2(thing1, thing2)
+        
+    def _goToPoint(self, vector):
+        self.direction = Vector2(vector - self.position).normalize()
+        
+    def _goAwayPoint(self, vector):
+        self.direction = Vector2(vector - self.position).normalize()
+        self.direction = self.direction.elementwise() * -1
 
+
+        
 class Static(object):
     def __init__(self, position = None):
         random.seed()

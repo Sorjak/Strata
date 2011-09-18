@@ -18,16 +18,18 @@ def main():
     #init objects
     enemies = pygame.sprite.RenderPlain()
     for i in range(0, random.randint(NUM_CREEPS / 2 , NUM_CREEPS)-1):
-        enemies.add(Creep(i))
-    print 
-    allenemies = pygame.sprite.RenderUpdates(enemies)
+        enemies.add(Creep(i, None, None))
     
     food = pygame.sprite.RenderPlain()
     for i in range(0, random.randint(NUM_FOOD /2 , NUM_FOOD) - 1):
         food.add(Food())
-        
-    # hunters = [Hunter()]
     
+    hunters = pygame.sprite.RenderPlain()
+    for i in range(0, random.randint(1, 4)):
+        hunters.add(Hunter(i, None, None))
+    
+    
+    entities = pygame.sprite.RenderUpdates(enemies, hunters, food)
     # allhunters = pygame.sprite.RenderPlain(hunters)
     #end init objects
     
@@ -40,8 +42,6 @@ def main():
     map.convert()
     map.generateWorld(screen)
     #end map stuff
-    
-
     
     #main loop
     while running:
@@ -79,9 +79,9 @@ def main():
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 event.pos = (event.pos[0] - mapDX, event.pos[1] - mapDY)
                 if event.button == 1:
-                    clearSelections(enemies)
+                    clearSelections(entities)
                     selected = None
-                    for e in enemies:
+                    for e in entities:
                         if e.rect.collidepoint(event.pos):
                             e.selected = True
                             selected = e
@@ -93,26 +93,19 @@ def main():
         #End event listening             
                     
         clock.tick(70)
-        # screen.blit(bg, (0,0))
         map.rect.topleft = (mapDX, mapDY)
         map.draw(screen)
         drawInfo(screen, bg, clock.get_fps(), len(enemies.sprites()), selected, map.rect.topleft, mousepos)
         
         #Enemy updates
         for e in enemies:
-            e.graze(food)
-            e.checkDanger(mousepos)
-            e.update()
-            # handleEnemyCollisions(e, enemies)
-            
+            e.update(food)
             e.draw(map)
             
-        #End enemy updates
-        # clearSelections(enemies)
-        # for h in hunters:
-            # h.update()
-            # h.hunt(enemies)
-            # h.draw(screen)
+        for h in hunters:
+            h.update(enemies)
+            h.draw(map)
+
         spawnFood = random.randint(1, 10000)
         if spawnFood > 9970 and len(food) < (NUM_CREEPS / 4) :
             food.add(Food())
@@ -120,14 +113,13 @@ def main():
             f.update()
             f.checkGrazers(enemies)
             f.draw(map)
-        
+            
+
+        # entities.draw(map)
         #check for game over
-        if len(food) == 0 or len(enemies) == 0:
+        if len(enemies) == 0:
             running = False
         
-        # food.draw(screen)
-        # allenemies.draw(screen)
-        # allhunters.draw(screen)
         pygame.display.flip()
 
     gameOver(screen)
@@ -137,25 +129,6 @@ def main():
 def clearSelections(es):
     for e in es:
         e.selected = False
-
-
-# def handleEnemyCollisions(e, enemies):
-    # for ei in enemies:
-        # if e is not ei:
-            # if e.rect.colliderect(ei.rect):
-                # if e.growth > ei.growth:
-                    # ei.kill()
-                    # e.grow(ei.growth)
-                # elif ei.growth > e.growth:
-                    # e.kill()
-                    # ei.grow(e.growth)
-                # else:
-                # temp = e.direction
-                # e.direction = ei.direction
-                # ei.direction = temp
-                # break
-                
-
                 
 def handleTextInput(st, font):
     if re.match(r"ask\s(?P<words>.*?)\sfen", st):
@@ -172,9 +145,9 @@ def drawInfo(screen, bg, fps, numEnemies, selected, mappos, mousepos):
     pygame.draw.line(screen, WHITE, (0, WINDOW_SIZE[1]), (WINDOW_SIZE[0], WINDOW_SIZE[1]))
     font = pygame.font.Font(None, 14)
     screen.blit(font.render("FPS: %s | Number of Enemies: %s | Map Position : %s" % (fps, numEnemies, mappos), 1, WHITE), (0, WINDOW_SIZE[1] + 7))
-    if selected:
-        screen.blit(font.render("Selected creep: %s | Has target? %s | Speed: %s, Life: %s | Direction: %s | Position: %s" % \
-                    (selected.id, selected.nearestFood is not None, round(selected.speed, 3), round(selected.life, 3), selected.direction, selected.position), \
+    if selected and type(selected) is Creep or type(selected) is Hunter:
+        screen.blit(font.render("Selected entity: %s | Eating?: %s | Speed: %s, Life: %s, Full: %s | Direction: %s | Position: %s" % \
+                    (selected.id, selected.eating, round(selected.speed, 3), round(selected.life, 3), round(selected.full, 3), selected.direction, selected.position), \
                     1, WHITE), (0, WINDOW_SIZE[1] + 18))
     if mousepos:
         screen.blit(font.render("Mouse Position : %s, %s" % (mousepos[0], mousepos[1]), 1, WHITE), (0, WINDOW_SIZE[1] + 29))
