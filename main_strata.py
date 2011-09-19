@@ -25,8 +25,8 @@ def main():
         food.add(Food())
     
     hunters = pygame.sprite.RenderPlain()
-    for i in range(0, random.randint(1, 4)):
-        hunters.add(Hunter(i, None, None))
+    for i in range(0, random.randint(3, 6)):
+        hunters.add(Hunter(i, None, None, life=25.0))
     
     
     entities = pygame.sprite.RenderUpdates(enemies, hunters, food)
@@ -40,42 +40,22 @@ def main():
     mapDX = mapDY = 0
     map = Map(WORLD_SIZE)
     map.convert()
-    map.generateWorld(screen)
+    map.generateWorld2()
     #end map stuff
     
     #main loop
     while running:
         #Listen for user events
         mousepos = None
+        checkKeys = False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = 0
                 sys.exit(0)
             elif event.type == pygame.KEYDOWN:
-                if event.key in MOVE_KEYS:
-                    if event.key == K_LEFT or event.key == K_a:
-                        if mapDX >= 0:
-                            mapDX = 0
-                        else:
-                            mapDX += SCROLL_SPEED
-                    elif event.key == K_RIGHT or event.key == K_d:
-                        if mapDX <= -(WORLD_SIZE[0] - WINDOW_SIZE[0]):
-                            mapDX = -(WORLD_SIZE[0] - WINDOW_SIZE[0])
-                        else:
-                            mapDX -= SCROLL_SPEED
-                    elif event.key == K_UP or event.key == K_w:
-                        if mapDY >= 0:
-                            mapDY = 0
-                        else:
-                            mapDY += SCROLL_SPEED
-                    elif event.key == K_DOWN or event.key == K_s:
-                        if mapDY <= -(WORLD_SIZE[1] - WINDOW_SIZE[1]):
-                            mapDY = -(WORLD_SIZE[1] - WINDOW_SIZE[1])
-                        else:
-                            mapDY -= SCROLL_SPEED
-                        
-                else:
-                    print "whoopsie!"
+                if event.key == K_q:
+                    running = 0
+                    sys.exit(0)
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 event.pos = (event.pos[0] - mapDX, event.pos[1] - mapDY)
                 if event.button == 1:
@@ -90,19 +70,46 @@ def main():
                     mousepos = event.pos
             else:
                 pygame.event.pump()
+
+        key=pygame.key.get_pressed()
+        if key[K_LEFT] or key[K_a]:
+            if mapDX >= 0:
+                mapDX = 0
+            else:
+                mapDX += SCROLL_SPEED
+        if key[K_RIGHT] or key[K_d]:
+            if mapDX <= -(WORLD_SIZE[0] - WINDOW_SIZE[0]):
+                mapDX = -(WORLD_SIZE[0] - WINDOW_SIZE[0])
+            else:
+                mapDX -= SCROLL_SPEED
+        if key[K_UP] or key[K_w]:
+            if mapDY >= 0:
+                mapDY = 0
+            else:
+                mapDY += SCROLL_SPEED
+        if key[K_DOWN] or key[K_s]:
+            if mapDY <= -(WORLD_SIZE[1] - WINDOW_SIZE[1]):
+                mapDY = -(WORLD_SIZE[1] - WINDOW_SIZE[1])
+            else:
+                mapDY -= SCROLL_SPEED
         #End event listening             
                     
         clock.tick(70)
         map.rect.topleft = (mapDX, mapDY)
         map.draw(screen)
-        drawInfo(screen, bg, clock.get_fps(), len(enemies.sprites()), selected, map.rect.topleft, mousepos)
+        
         
         #Enemy updates
         for e in enemies:
+            if mousepos:
+                e.mouseEvent(mousepos)
             e.update(food)
             e.draw(map)
+
             
         for h in hunters:
+            if mousepos:
+                h.mouseEvent(mousepos)
             h.update(enemies)
             h.draw(map)
 
@@ -110,11 +117,13 @@ def main():
         if spawnFood > 9970 and len(food) < (NUM_CREEPS / 4) :
             food.add(Food())
         for f in food:
+            if mousepos:
+                f.mouseEvent(mousepos)
             f.update()
             f.checkGrazers(enemies)
             f.draw(map)
             
-
+        drawInfo(screen, bg, clock.get_fps(), len(enemies.sprites()), len(hunters.sprites()), selected, map.rect.topleft, mousepos)
         # entities.draw(map)
         #check for game over
         if len(enemies) == 0:
@@ -140,11 +149,11 @@ def handleTextInput(st, font):
     message = font.render("Say: %s" % "".join(st), 1, textcolor)
     return (message, inspell)
 
-def drawInfo(screen, bg, fps, numEnemies, selected, mappos, mousepos):
+def drawInfo(screen, bg, fps, numcreeps, numhunters, selected, mappos, mousepos):
     screen.blit(bg, (0, WINDOW_SIZE[1]))
     pygame.draw.line(screen, WHITE, (0, WINDOW_SIZE[1]), (WINDOW_SIZE[0], WINDOW_SIZE[1]))
     font = pygame.font.Font(None, 14)
-    screen.blit(font.render("FPS: %s | Number of Enemies: %s | Map Position : %s" % (fps, numEnemies, mappos), 1, WHITE), (0, WINDOW_SIZE[1] + 7))
+    screen.blit(font.render("FPS: %s | Creeps: %s | Hunters: %s | Map Position : %s" % (fps, numcreeps, numhunters, mappos), 1, WHITE), (0, WINDOW_SIZE[1] + 7))
     if selected and type(selected) is Creep or type(selected) is Hunter:
         screen.blit(font.render("Selected entity: %s | Eating?: %s | Speed: %s, Life: %s, Full: %s | Direction: %s | Position: %s" % \
                     (selected.id, selected.eating, round(selected.speed, 3), round(selected.life, 3), round(selected.full, 3), selected.direction, selected.position), \

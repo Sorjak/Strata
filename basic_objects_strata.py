@@ -14,21 +14,18 @@ class Particle(object):
         thing2 = round(choice([x * 0.1 for x in range(-10, 10)]) , 3)
         self.direction = Vector2(thing1, thing2)
         
-        if not pos:
-            self.position = Vector2(random.randint(0, GAME_SIZE[0]), random.randint(0, GAME_SIZE[1]))
-        else:
-            self.position = pos
-        if not speed:
-            self.speed = random.random()
-        else:
-            self.speed = speed
+        self.position = pos if pos else Vector2(random.randint(0, GAME_SIZE[0]), random.randint(0, GAME_SIZE[1]))
+            
+        self.speed = speed if speed else random.random()
     
     def move(self):
         displacement = Vector2(self.direction.x * self.speed, self.direction.y * self.speed)
         self.position = self.position + displacement
-        self.bounce()
+        self._bounce()
     
-    def bounce(self):
+    def mouseEvent(self, pos):
+        pass
+    def _bounce(self):
         width = GAME_SIZE[0]
         height = GAME_SIZE[1]
         # x coords
@@ -45,7 +42,8 @@ class Particle(object):
         elif self.position.y <= (self.rect.size[1] / 2):
             self.position.y = (self.rect.size[1] / 2)
             self.direction.reflect_ip(Vector2(0, 1))   
-            
+    
+    
     def _setRandomPosition(self):
         self.position = Vector2(random.randint(0, GAME_SIZE[0]), random.randint(0, GAME_SIZE[1]))
         
@@ -61,7 +59,6 @@ class Particle(object):
         self.direction = Vector2(vector - self.position).normalize()
         self.direction = self.direction.elementwise() * -1
 
-
         
 class Static(object):
     def __init__(self, position = None):
@@ -70,3 +67,32 @@ class Static(object):
             self.position = position
         else:
             self.position = Vector2(random.randint(0, GAME_SIZE[0]), random.randint(0, GAME_SIZE[1]-20))
+    def mouseEvent(self, pos):
+        pass
+        
+        
+class Square(object):
+    def __init__(self, tl, br, myarr, rough):
+        self.tl = tl #Top left
+        self.tr = Vector2(br.x, tl.y) #Top right
+        self.br = br #Bottom right
+        self.bl = Vector2(tl.x, br.y) #Bottom left
+        self.dimensions = [self.tl, self.tr, self.br, self.bl]
+        self.center = Vector2(br.x - ((br.x - tl.x) / 2), br.y - ((br.y - tl.y) / 2))
+        self.myarr = myarr
+        self.children = [None, None, None, None]
+        self.rough = rough
+        self.sqSize = br.x - tl.x
+        self.value = self.getValue()
+        self.myarr[int(self.center.x)][int(self.center.y)] = self.value
+        
+    def divide(self, tiles):
+        pass
+        
+    def getValue(self):
+        avg = 0
+        for d in self.dimensions:
+            avg += self.myarr[int(d.x)][int(d.y)]
+        
+        avg = avg / 4
+        return round(avg + random.uniform(-self.rough, self.rough), 3)

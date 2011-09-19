@@ -10,15 +10,19 @@ BLACK = (0, 0, 0)
 
 BG_COLOR = BLACK
 WINDOW_SIZE = (800, 600)
-WORLD_SIZE = (1000, 1000)
+MAP_GEN_NUM = 129
+MAP_GEN_ROUGH = 1.0
+WORLD_SIZE = (MAP_GEN_NUM * 15, MAP_GEN_NUM * 15)
 GAME_SIZE = WORLD_SIZE
-SCROLL_SPEED = 2
-GAME_TITLE = 'Strata'
+SCROLL_SPEED = 4
+GAME_TITLE = 'Strata %sx%s' % WINDOW_SIZE
 MOVE_KEYS = (pygame.K_UP, pygame.K_DOWN, pygame.K_RIGHT, pygame.K_LEFT,
             pygame.K_w, pygame.K_s, pygame.K_d, pygame.K_a)
 NUM_CREEPS = 40
 NUM_FOOD = 10
 MAPTILE_SIZE = (20, 20)
+
+ANIMAL_DECAY = .002
 
 #TERRAIN_TYPES = ("normal", "ice", "desert", "")
 
@@ -82,11 +86,6 @@ def adjust_to_correct_appdir():
         if not appdir in sys.path:
             sys.path.insert(0,appdir)
     except:
-        #placeholder for feedback, adjust to your app.
-        #remember to use only python and python standart libraries
-        #not any resource or module into the appdir 
-        #a window in Tkinter can be adequate for apps without console
-        #a simple print with a timeout can be enough for console apps
         print 'Please run from an OS console.'
         import time
         time.sleep(10)
