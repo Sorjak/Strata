@@ -1,6 +1,5 @@
-import os, pygame, math
+import os, pygame, math, sys
 from pygame.locals import *
-from pygame.math import Vector2
 
 BLUE = (0, 0, 255)
 RED = (255, 0, 0)
@@ -11,7 +10,7 @@ BLACK = (0, 0, 0)
 BG_COLOR = BLACK
 WINDOW_SIZE = (800, 600)
 MAP_GEN_NUM = 129
-MAP_GEN_ROUGH = 1.0
+MAP_GEN_ROUGH = 0.75
 WORLD_SIZE = (MAP_GEN_NUM * 15, MAP_GEN_NUM * 15)
 GAME_SIZE = WORLD_SIZE
 SCROLL_SPEED = 4
@@ -22,7 +21,11 @@ NUM_CREEPS = 40
 NUM_FOOD = 10
 MAPTILE_SIZE = (20, 20)
 
+MAX_INT = sys.maxint
+
 ANIMAL_DECAY = .002
+
+GAME_STATUS = True
 
 #TERRAIN_TYPES = ("normal", "ice", "desert", "")
 
@@ -67,13 +70,6 @@ def load_sound(name):
         print 'Cannot load sound:', wav
         raise SystemExit, message
     return sound
-
-def addVectors((angle1, length1), (angle2, length2)):
-    x  = math.sin(angle1) * length1 + math.sin(angle2) * length2
-    y  = math.cos(angle1) * length1 + math.cos(angle2) * length2    
-    length = math.hypot(x, y)
-    angle = 0.5 * math.pi - math.atan2(y, x)
-    return (angle, length)
     
 def adjust_to_correct_appdir():
     import os, sys
@@ -90,4 +86,27 @@ def adjust_to_correct_appdir():
         import time
         time.sleep(10)
         sys.exit(1)
-        
+
+import threading
+
+class RepeatTimer(object):
+    def __init__(self, interval, callable, *args, **kwargs):
+        self.interval = interval
+        self.callable = callable
+        self.args = args
+        self.kwargs = kwargs
+        self.mThread = None
+
+    def startTimer(self):
+        self.mThread = threading.Timer(self.interval, self.callable,
+                            self.args, self.kwargs)
+        self.mThread.start()
+        # t.join()
+    def isRunning(self):
+        if self.mThread:
+            return self.mThread.isAlive()
+        else:
+            return False
+    def stopTimer(self):
+        if self.isRunning():
+            self.mThread.cancel()

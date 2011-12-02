@@ -4,7 +4,10 @@ from time import time
 from pygame.locals import *
 from utils_strata import *
 from math import hypot, atan2, radians, degrees
-from pygame.math import Vector2
+try:
+    from pygame.math import Vector2
+except ImportError:
+    from math_strata import Vector2
 
 
 class Particle(object):
@@ -56,8 +59,12 @@ class Particle(object):
         self.direction = Vector2(vector - self.position).normalize()
         
     def _goAwayPoint(self, vector):
-        self.direction = Vector2(vector - self.position).normalize()
-        self.direction = self.direction.elementwise() * -1
+        temp = Vector2(vector - self.position)
+        try:
+            temp = temp.normalize()
+        except ValueError:
+            pass
+        self.direction = temp.elementwise() * -1
 
         
 class Static(object):
@@ -85,6 +92,7 @@ class Square(object):
         self.sqSize = br.x - tl.x
         self.value = self.getValue()
         self.myarr[int(self.center.x)][int(self.center.y)] = self.value
+        self.makeRect()
         
     def divide(self, tiles):
         pass
@@ -96,3 +104,6 @@ class Square(object):
         
         avg = avg / 4
         return round(avg + random.uniform(-self.rough, self.rough), 3)
+        
+    def makeRect(self):
+        self.rect = pygame.Rect((self.tl.x * MAPTILE_SIZE[0], self.tl.y * MAPTILE_SIZE[1]), (self.sqSize * MAPTILE_SIZE[0], self.sqSize * MAPTILE_SIZE[1]))
