@@ -18,6 +18,7 @@ class Map(pygame.Surface):
         self.rect = pygame.Rect((0, 0), dimensions)
         self.tiles = []
         self.root = None
+        self.renderRect = None
         
     def generateWorld(self):
         random.seed()
@@ -68,12 +69,12 @@ class Map(pygame.Surface):
         rightBound = WINDOW_SIZE[0] - self.rect.left
         leftBound = -(self.rect.left)
         topBound = -(self.rect.top)
-        renderRect = pygame.Rect((leftBound, topBound), WINDOW_SIZE)
+        self.renderRect = pygame.Rect((leftBound, topBound), WINDOW_SIZE)
             
-        tiles = self.getTilesFromRect(renderRect)
+        tiles = self.getTilesFromRect(self.renderRect)
         
         for maptile in tiles:
-            maptile.draw(self, renderRect)
+            maptile.draw(self, self.renderRect)
 
 
 class MapTile(Square, pygame.sprite.DirtySprite):

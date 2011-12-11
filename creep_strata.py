@@ -6,13 +6,13 @@ from animal_strata import Animal
 from hunter_strata import Hunter
 
 class Creep(Animal):
-    def __init__(self, id, map, pos, speed, speedmod=None, life=50.0, range=150):
-        Animal.__init__(self, id, "creep" + str(random.randint(1, 3)) + ".png", pos, speed, life, range)
-        self.map = map
+    def __init__(self, id, game, pos, speed, speedmod=None, life=50.0, range=150):
+        Animal.__init__(self, id, "creep" + str(random.randint(1, 3)) + ".png", pos, speed, life, range, game.hunters, game.food)
         self.nearestEnemy = None
         self.eating = False
         self.range = random.randint(50, 150)
         self.speedmod = speedmod if speedmod else random.uniform(0.8, 1.5)
+        self.game = game
         
     def _update(self):
         if not self.nearestEnemy:
@@ -29,7 +29,7 @@ class Creep(Animal):
             self.eating = False
             self.searching = False
 
-        myTiles = self.map.getTilesFromRect(self.rect)
+        myTiles = self.game.map.getTilesFromRect(self.rect)
         modifier = max([x.modifier for x in myTiles])
         self.speed = self.speed / modifier
         
@@ -57,7 +57,7 @@ class Creep(Animal):
 
     def _grow(self):
         friends = self.groups()
-        newchild = Creep(len(friends[0]) + 1, self.map, self.position, None)
+        newchild = Creep(len(friends[0]) + 1, self.game, self.position, None)
         self.children.append(newchild)
         for f in friends:
             f.add(newchild)

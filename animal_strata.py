@@ -10,7 +10,7 @@ except ImportError:
     from math_strata import Vector2
 
 class Animal(Particle, pygame.sprite.DirtySprite):
-    def __init__(self, id, image, pos, speed, life, range):
+    def __init__(self, id, image, pos, speed, life, range, predators, prey):
         Particle.__init__(self, pos, speed)
         pygame.sprite.DirtySprite.__init__(self)
         self.size = (15, 15)
@@ -27,14 +27,16 @@ class Animal(Particle, pygame.sprite.DirtySprite):
         self.searching = False
         self.nearestFood = None
         self.speedmod = None
+        self.predators = predators
+        self.prey = prey
         
-    def update(self, food):
+    def update(self):
         self.life -= ANIMAL_DECAY
         self.speed = (self.life * self.speedmod) * .01
     
         self._update()
         
-        self.search(food)
+        self.search(self.prey)
         
         self.move()
         self.rect.centerx = self.position.x
@@ -80,6 +82,9 @@ class Animal(Particle, pygame.sprite.DirtySprite):
         pass
     
     def _foundFood(self, nFood):
+        pass
+        
+    def _grow(self):
         pass
             
     def _findNearestEntity(self, entities):

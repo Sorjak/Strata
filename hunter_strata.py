@@ -10,8 +10,8 @@ from animal_strata import Animal
 
 
 class Hunter(Animal):
-    def __init__(self, id, map, pos, speedmod, image="playericon.png", life=25.0, range=200):
-        Animal.__init__(self, id, image, pos, None, life, range)
+    def __init__(self, id, game, pos, speedmod, image="playericon.png",  life=25.0, range=200):
+        Animal.__init__(self, id, image, pos, None, life, range, None, game.creeps)
         self.size = (15, 15)
         self.image_raw, self.rect = load_image(image, -1)
         self.image = pygame.transform.scale(self.image_raw, self.size)
@@ -19,14 +19,14 @@ class Hunter(Animal):
         self.rect.center = (self.position.x, self.position.y)
         self.nearestFood = None
         self.nearestEnemy = None
-        self.map = map
+        self.game = game
         self.speedmod = speedmod if speedmod else random.uniform(2.3, 2.7)
         
     def _update(self):
         if not self.nearestEnemy:
             if not self.nearestFood or self.nearestFood.life <= 0:
                 self.eating = False
-            if self.eating and self.nearestFood.life > 0:
+            if self.eating and self.nearestFood.life > 0 and self.rect.colliderect(self.nearestFood) :
                 self.speed = self.nearestFood.speed
                 self.nearestFood.life = self.nearestFood.life - .05
                 self.life += ANIMAL_DECAY
@@ -40,7 +40,7 @@ class Hunter(Animal):
             self.eating = False
             self.searching = False
 
-        myTiles = self.map.getTilesFromRect(self.rect)
+        myTiles = self.game.map.getTilesFromRect(self.rect)
         modifier = max([x.modifier for x in myTiles])
         if modifier == 4:
             self.speed /= 5.0
@@ -66,7 +66,7 @@ class Hunter(Animal):
         
     def _grow(self):
         friends = self.groups()
-        newchild = Hunter(len(friends[0]) + 1,self.map, self.position, None)
+        newchild = Hunter(len(friends[0]) + 1,self.game, self.position, None)
         self.children.append(newchild)
         for f in friends:
             f.add(newchild)
