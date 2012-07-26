@@ -29,6 +29,7 @@ class Animal(Particle, pygame.sprite.DirtySprite):
         self.speedmod = None
         self.predators = predators
         self.prey = prey
+        self.dirty = 0
         
     def update(self):
         self.life -= ANIMAL_DECAY
@@ -37,10 +38,13 @@ class Animal(Particle, pygame.sprite.DirtySprite):
         self._update()
         
         self.search(self.prey)
-        
+        temp = self.position
         self.move()
         self.rect.centerx = self.position.x
         self.rect.centery = self.position.y
+        
+        if temp != self.position:
+            self.dirty = 1
         
         if self.full >= 100:
             self._grow()
@@ -63,6 +67,7 @@ class Animal(Particle, pygame.sprite.DirtySprite):
         else:
             pygame.draw.line(screen, WHITE, self.rect.center, self.position + displacement)
         screen.blit(self.image, self.rect)
+        self.dirty = 0
         
     def search(self, food):
         self.nearestFood = self._findNearestEntity(food)

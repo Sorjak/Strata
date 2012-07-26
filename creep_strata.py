@@ -7,7 +7,7 @@ from hunter_strata import Hunter
 
 class Creep(Animal):
     def __init__(self, id, game, pos, speed, speedmod=None, life=50.0, range=150):
-        Animal.__init__(self, id, "creep" + str(random.randint(1, 3)) + ".png", pos, speed, life, range, game.hunters, game.food)
+        Animal.__init__(self, id, "creep" + str(random.randint(1, 3)) + ".png", pos, speed, life, range, game.hm.members, game.pm.members)
         self.nearestEnemy = None
         self.eating = False
         self.range = random.randint(50, 150)
@@ -15,6 +15,7 @@ class Creep(Animal):
         self.game = game
         
     def _update(self):
+        self.checkDanger(self.game.hunters)
         if not self.nearestEnemy:
             if not self.nearestFood:
                 self.eating = False

@@ -8,17 +8,13 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
 BG_COLOR = BLACK
-WINDOW_SIZE = (800, 600)
 MAP_GEN_NUM = 129
 MAP_GEN_ROUGH = 0.75
+WINDOW_SIZE = (800, 600)
 WORLD_SIZE = (MAP_GEN_NUM * 15, MAP_GEN_NUM * 15)
 GAME_SIZE = WORLD_SIZE
-SCROLL_SPEED = 4
-GAME_TITLE = 'Strata %sx%s' % WINDOW_SIZE
-MOVE_KEYS = (pygame.K_UP, pygame.K_DOWN, pygame.K_RIGHT, pygame.K_LEFT,
-            pygame.K_w, pygame.K_s, pygame.K_d, pygame.K_a)
-NUM_CREEPS = 40
-NUM_FOOD = 10
+
+
 MAPTILE_SIZE = (20, 20)
 
 MAX_INT = sys.maxint

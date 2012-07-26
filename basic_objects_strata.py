@@ -65,6 +65,9 @@ class Particle(object):
         except ValueError:
             pass
         self.direction = temp.elementwise() * -1
+        
+    def collidesWith(self, point):
+        return self.rect.collidepoint(point)
 
         
 class Static(object):

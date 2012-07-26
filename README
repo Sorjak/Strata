@@ -1,1 +1,9 @@
-Way to follow directions
+Hi! 
+
+This is a test project that seeks to emulate simple life in real time.
+
+As of july 2012, there are plants, grazers, and hunters. 
+
+Hunters hunt grazers, grazers hunt plants, and plants do nothing.
+
+That's it!

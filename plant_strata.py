@@ -6,7 +6,7 @@ from globals_strata import *
 from basic_objects_strata import Particle
 
 class Plant(Particle, pygame.sprite.DirtySprite):
-    def __init__(self, id, image, pos, map, life):
+    def __init__(self, id, image, pos, game, life):
         Particle.__init__(self, pos, 0)
         pygame.sprite.DirtySprite.__init__(self)
         self.size = (20, 20)
@@ -18,6 +18,7 @@ class Plant(Particle, pygame.sprite.DirtySprite):
         self.life = life
         self.full = 0
         self.children = []
+        self.game = game
         # self.spawn(map)
         
     def spawn(self, map):

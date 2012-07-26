@@ -11,7 +11,7 @@ from animal_strata import Animal
 
 class Hunter(Animal):
     def __init__(self, id, game, pos, speedmod, image="playericon.png",  life=25.0, range=200):
-        Animal.__init__(self, id, image, pos, None, life, range, None, game.creeps)
+        Animal.__init__(self, id, image, pos, None, life, range, None, game.cm.members)
         self.size = (15, 15)
         self.image_raw, self.rect = load_image(image, -1)
         self.image = pygame.transform.scale(self.image_raw, self.size)
