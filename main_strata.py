@@ -13,18 +13,19 @@ from managers_strata import *
 
 NUM_CREEPS = 50
 NUM_FOOD = 10
-NUM_HUNTERS = 6
+NUM_PREDS = 6
 
 SCROLL_SPEED = 6
 GAME_TITLE = 'Strata %sx%s' % WINDOW_SIZE
 MOVE_KEYS = (pygame.K_UP, pygame.K_DOWN, pygame.K_RIGHT, pygame.K_LEFT,
             pygame.K_w, pygame.K_s, pygame.K_d, pygame.K_a)
 
+PLANT_GROWTH = pygame.USEREVENT+1
+
 class StrataGame(object):
     def __init__(self, screen, bg, clock):
         self.running = True
         self.paused = False
-        
         
         self.screen = screen
         self.bg = bg
@@ -34,7 +35,8 @@ class StrataGame(object):
         self.creeps = StrataGroup("Creeps")
         self.food = StrataGroup("Food")
         self.hunters = StrataGroup("Hunters")
-        self.entities = None
+        self.entities = []
+        self.oEntities = {}
         
         # self.timers = [RepeatTimer(5.0, self.spawnHunters), RepeatTimer(5.0, self.spawnFood)]
         self.timers = []
@@ -50,36 +52,51 @@ class StrataGame(object):
         worldgenthread.start()
         
         font = pygame.font.Font(None, 24)
+        numdots = 0
         while(worldgenthread.isAlive()):
             clock.tick(5)
             screen.fill(BLACK)
-            numdots = random.randint(1, 5)
-            screen.blit(font.render("Loading the map%s" % ("." * numdots), 1, WHITE), ((WINDOW_SIZE[0] /2) - 100, WINDOW_SIZE[1]/2))
+            numdots += 1
+            screen.blit(font.render("Loading the map%s" % ("." * (numdots % 5)), 1, WHITE), ((WINDOW_SIZE[0] /2) - 100, WINDOW_SIZE[1]/2))
             pygame.display.flip()
         return map
         
     def initEntities(self):
-        self.cm = CreepManager(self, NUM_CREEPS)
-        
-        
-        self.pm = PlantManager(self, NUM_FOOD)
-        
-        
-        self.hm = HunterManager(self, NUM_HUNTERS)
-        
-        self.cm.seed()
-        self.pm.seed()
-        self.hm.seed()
+        self.oEntities['food'] = []
+        self.oEntities['creeps'] = []
+        self.oEntities['preds'] = []
+
+        for p in range(0, NUM_FOOD):
+            x = random.randint(0, GAME_SIZE[0])
+            y = random.randint(0, GAME_SIZE[1])
+            cherry = Cherry(p, (x, y), self)
+            self.addEntity(cherry, 'food')
+
+
+        for c in range(0, NUM_CREEPS):
+            x = random.randint(0, GAME_SIZE[0])
+            y = random.randint(0, GAME_SIZE[1])
+            creep = Creep(1000 + c, self, None, None)
+            self.addEntity(creep, 'creeps')
+
+        for h in range(0, NUM_PREDS):
+            x = random.randint(0, GAME_SIZE[0])
+            y = random.randint(0, GAME_SIZE[1])
+            hunter = Hunter(2000 + h, self, None, None)
+            self.addEntity(hunter, 'preds')
         
         # self.entities = pygame.sprite.RenderUpdates(self.creeps, self.hunters, self.food)
         # self.entities.add(self.pm)
-        self.entities = [self.hm, self.pm, self.cm]
+
+    def initTimers(self):
+        pygame.time.set_timer(PLANT_GROWTH, 5000)          #plant growth timer
         
     def main(self):
         random.seed()
         
         #init objects
         self.initEntities()
+        self.initTimers()
         self.mousepos = self.getRelativeMousePos()
         
         #main loop
@@ -91,9 +108,8 @@ class StrataGame(object):
             
             self.map.rect.topleft = (self.mapDX, self.mapDY)
             
-
+            self.screen.blit(self.bg, (0, 0))
             if not self.paused:
-                self.startDaemons()
                 updatethread = threading.Thread(target=self.update())
                 updatethread.start()
                 renderthread = threading.Thread(target=self.render())
@@ -106,8 +122,8 @@ class StrataGame(object):
 
 
             #check for game over
-            if len(self.creeps) == 0:
-                running = False
+            if len(self.entities) == 0:
+                self.running = False
             
             #wait for threads
             
@@ -116,14 +132,12 @@ class StrataGame(object):
             
             pygame.display.flip()
 
-        self.stopDaemons()
-        self.gameOver(self.screen)
+        sys.exit(0)
         
     def render(self):
         self.map.draw(self.screen)
         for e in self.entities:
             e.draw(self.map)
-           
         
     def update(self):
         for e in self.entities:
@@ -133,11 +147,9 @@ class StrataGame(object):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = 0
-                self.stopDaemons()
                 sys.exit(0)
             elif event.type == pygame.KEYDOWN:
                 if event.key == K_q:
-                    self.stopDaemons()
                     self.running= 0
                 elif event.key == K_p:
                     self.paused = not self.paused
@@ -150,11 +162,15 @@ class StrataGame(object):
                     for e in self.entities:
                         collision = e.collidesWith(event.pos)
                         if collision:
-                            collision.selected = True
-                            self.selected = collision
+                            e.selected = True
+                            self.selected = e
                             break
                 elif event.button == 3:
                     pass
+            elif event.type == PLANT_GROWTH:
+                plants = [p for p in self.entities if type(p) is Cherry]
+                for p in plants:
+                    p.grow(plants)
             else:
                 pygame.event.pump()
         temp = pygame.key.get_repeat()
@@ -182,49 +198,21 @@ class StrataGame(object):
                 self.mapDY -= SCROLL_SPEED
         pygame.key.set_repeat(temp[0], temp[1])
         self.mousepos = self.getRelativeMousePos()
-        
-    def startDaemons(self):
-        for t in self.timers:
-            if not t.isRunning():
-                t.startTimer()
-            
-    def stopDaemons(self):
-        for t in self.timers:
-            t.stopTimer()
-        
-    #Function set on a timer to spawn more hunters if they die out    
-    def spawnHunters(self):
-        if len(self.hunters) <= 0:
-            print "no more hunters!"
-          
-    def spawnFood(self):
-        if len(self.food) < (NUM_CREEPS / 4) :
-            newfood = Cherry(len(self.food) + 1, None, self)
-            self.food.add(newfood)
-            self.entities.add(newfood)
     
-# util functions
-            
-    def gameOver(self, screen):
-        font = pygame.font.Font(None, 50)
-        self.screen.blit(font.render("GAME OVER", 1, RED), ((WINDOW_SIZE[0] /2) - 100, WINDOW_SIZE[1]/2))
-        pygame.display.update()
-        pygame.time.delay(3000)
+    # util functions
 
     def drawInfo(self):
-        numcreeps = len(self.cm)
-        numhunters = len(self.hm)
-        numfood = len(self.pm)
+        numentities = len(self.entities)
         mappos = self.map.rect.topleft
         self.screen.fill(BLACK, pygame.Rect((0, WINDOW_SIZE[1]), (WINDOW_SIZE[0], WINDOW_SIZE[1])))
         pygame.draw.line(self.screen, WHITE, (0, WINDOW_SIZE[1]), (WINDOW_SIZE[0], WINDOW_SIZE[1]))
         font = pygame.font.Font(None, 14)
-        self.screen.blit(font.render("FPS: %s | Creeps: %s | Hunters: %s | Food: %s | Map Position : %s" % \
-                        (int(self.clock.get_fps()), numcreeps, numhunters, numfood, mappos), 1, WHITE), (0, WINDOW_SIZE[1] + 7))
+        self.screen.blit(font.render("FPS: %s | Entities: %s | Map Position : %s" % \
+                        (int(self.clock.get_fps()), numentities, mappos), 1, WHITE), (0, WINDOW_SIZE[1] + 7))
                         
         if self.selected and type(self.selected) is Creep or type(self.selected) is Hunter:
-            self.screen.blit(font.render("Selected entity: %s | Looking for food?: %s, Speed Modifier: %s | Speed: %s, Life: %s, Full: %s | Direction: %s | Position: %s" % \
-                        (self.selected.id, self.selected.searching, round(self.selected.speedmod, 3), round(self.selected.speed, 1), round(self.selected.life, 1), round(self.selected.full, 1), self.selected.direction, self.selected.position), \
+            self.screen.blit(font.render("Eating?: %s | Looking for food?: %s, Speed Modifier: %s | Speed: %s, Life: %s, Full: %s | Direction: %s | Position: %s" % \
+                        (self.selected.eating, self.selected.nearestFood, round(self.selected.speedmod, 3), round(self.selected.speed, 1), round(self.selected.life, 1), round(self.selected.full, 1), self.selected.direction, self.selected.position), \
                         1, WHITE), (0, WINDOW_SIZE[1] + 18))
                         
         if self.selected and type(self.selected) is Cherry:
@@ -235,6 +223,17 @@ class StrataGame(object):
         mpos = pygame.mouse.get_pos()
         output = (mpos[0] - self.mapDX, mpos[1] - self.mapDY)
         return output
+
+    def addEntity(self, e, eType):
+        self.entities.append(e)
+        self.oEntities[eType].append(e)
+
+    def removeEntity(self, obj, eType):
+        self.entities[:] = [x for x in self.entities if x is not obj]
+        self.oEntities[eType][:] = [x for x in self.oEntities[eType] if x is not obj]
+
+    def getNextId(self, eType):
+        return len(self.oEntities[eType]) + 1
     
 def initialize():
     adjust_to_correct_appdir()

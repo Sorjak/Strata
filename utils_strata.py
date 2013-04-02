@@ -19,8 +19,6 @@ MAPTILE_SIZE = (20, 20)
 
 MAX_INT = sys.maxint
 
-ANIMAL_DECAY = .002
-
 GAME_STATUS = True
 
 #TERRAIN_TYPES = ("normal", "ice", "desert", "")

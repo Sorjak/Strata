@@ -277,7 +277,7 @@ class Vector2(object):
         dot = self.x*other[0] + self.y*other[1]
         return math.degrees(math.atan2(cross, dot))
  
-    def normalized(self):
+    def normalize(self):
         length = self.length
         if length != 0:
             return self/length

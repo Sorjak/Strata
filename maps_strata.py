@@ -70,7 +70,9 @@ class Map(pygame.Surface):
         leftBound = -(self.rect.left)
         topBound = -(self.rect.top)
         self.renderRect = pygame.Rect((leftBound, topBound), WINDOW_SIZE)
-            
+
+        self.fill(BLACK)
+
         tiles = self.getTilesFromRect(self.renderRect)
         
         for maptile in tiles:
@@ -84,7 +86,16 @@ class MapTile(Square, pygame.sprite.DirtySprite):
         self.size = MAPTILE_SIZE
 
     def draw(self, screen, renderRect):
-        screen.blit(self.image, self.rect)
+        if self.type == TILE_TYPES["grass"]:
+            pass
+        if self.type == TILE_TYPES["water"]:
+            pygame.draw.rect(screen, BLUE, self.rect)
+        if self.type == TILE_TYPES["mountain"]:
+            pygame.draw.polygon(screen, GREEN, \
+                [[self.rect.centerx, self.rect.top], \
+                [self.rect.left, self.rect.bottom], \
+                [self.rect.right, self.rect.bottom]])
+        # screen.blit(self.image, self.rect)
         
     def divide(self, tiles):
         if self.sqSize == 1:

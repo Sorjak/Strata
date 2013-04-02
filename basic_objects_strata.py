@@ -74,11 +74,14 @@ class Static(object):
     def __init__(self, position = None):
         random.seed()
         if position:
-            self.position = position
+            self.position = Vector2(position)
         else:
             self.position = Vector2(random.randint(0, GAME_SIZE[0]), random.randint(0, GAME_SIZE[1]-20))
     def mouseEvent(self, pos):
         pass
+
+    def collidesWith(self, point):
+        return self.rect.collidepoint(point)
         
         
 class Square(object):

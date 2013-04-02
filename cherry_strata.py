@@ -7,12 +7,12 @@ from plant_strata import Plant
 
 class Cherry(Plant):
     def __init__(self, id, pos, game):
-        Plant.__init__(self, id, "cherries.png", self.spawn(pos), game, life=25)
+        Plant.__init__(self, id, "cherries.png", pos, game, life=25)
         self.selected = False
         self.grazers = []
         
     def _update(self):
-        self.checkGrazers(self.game.creeps)
+        self.checkGrazers(self.game.oEntities['creeps'])
         for g in self.grazers:
             # g.eating = True
             self.life -= .01
@@ -24,12 +24,8 @@ class Cherry(Plant):
                 self.grazers.append(g)
     
     def _draw(self, screen): 
-        pass
+        pygame.draw.circle(screen, GREEN, self.rect.center, self.rect.width / 2, 1)
         
-    def _grow(self):
-        pass
-        
-    def spawn(self, pos):
-        if not pos:
-            pass
+    def grow(self, plants):
+        Plant.grow(self, Cherry, plants)
     
